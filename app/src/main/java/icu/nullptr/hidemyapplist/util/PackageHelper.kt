@@ -88,10 +88,10 @@ object PackageHelper {
                 val packages = getInstalledPackagesFromAllUsers()
                 mutableMapOf<String, PackageCache>().also {
                     for (packageInfo in packages) {
-                        if (packageInfo.info.packageName in Constants.packagesShouldNotHide) continue
-                            val label = pm.getApplicationLabel(packageInfo.info?.applicationInfo).toString()
-                            val icon = hmaApp.appIconLoader.loadIcon(packageInfo.info?.applicationInfo)
-                            it[packageInfo.info.packageName] = PackageCache(packageInfo.info, label, icon, packageInfo.user)
+                        if (packageInfo.packageName in Constants.packagesShouldNotHide) continue
+                            val label = pm.getApplicationLabel(packageInfo.applicationInfo).toString()
+                            val icon = hmaApp.appIconLoader.loadIcon(packageInfo.applicationInfo)
+                            it[packageInfo.packageName] = PackageCache(packageInfo, label, icon, packageInfo.user)
                     }
                 }
             }
