@@ -39,7 +39,7 @@ object PackageHelper {
 
     class UserInfo (
         val id: Int,
-        val name: String
+        val name: String,
     )
 
     private object Comparators {
@@ -69,7 +69,7 @@ object PackageHelper {
     private lateinit var pm: PackageManager
 
     private val packageCache = MutableSharedFlow<Map<String, PackageCache>>(replay = 1)
-    private val mAppList = MutableSharedFlow<MutableList<String>>(replay = 1)
+    private val mAppList = MutableSharedFlow<List<String>>(replay = 1)
     val appList: SharedFlow<List<String>> = mAppList
 
     private val mRefreshing = MutableSharedFlow<Boolean>(replay = 1)
@@ -96,7 +96,7 @@ object PackageHelper {
                 }
             }
             packageCache.emit(cache)
-            mAppList.emit(cache.keys.toMutableList())
+            mAppList.emit(cache.keys.toList())
             mRefreshing.emit(false)
         }
     }
@@ -109,8 +109,7 @@ object PackageHelper {
             PrefManager.SortMethod.BY_UPDATE_TIME -> Comparators.byUpdateTime
         }
         if (PrefManager.appFilter_reverseOrder) comparator = comparator.reversed()
-        val list = mAppList.first()
-        list.sortWith(firstComparator.then(comparator))
+        val list = mAppList.first().sortedWith(firstComparator.then(comparator))
         mAppList.emit(list)
     }
 
@@ -127,7 +126,7 @@ object PackageHelper {
     }
 
     fun isSystem(packageName: String): Boolean = runBlocking {
-        packageCache.first()[packageName]!!.info.applicationInfo.flags and ApplicationInfo.FLAG_SYSTEM != 0
+        packageCache.first()[packageName]?.info?.applicationInfo?.flags?.and(ApplicationInfo.FLAG_SYSTEM) != 0
     }
 
     fun shellGetUsers(): List<UserInfo> {
@@ -156,12 +155,15 @@ object PackageHelper {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) {
             return pm.getInstalledPackages(0)
         }
+
         try {
             val res = HiddenApiBypass.invoke(PackageManager::class.java, pm, "getInstalledPackagesAsUser", 0, user) as List<*>
             val packages = mutableListOf<PackageInfo>()
+
             for (i in res.indices) {
                 packages += res[i] as PackageInfo
             }
+
             return packages.toList()
         } catch(e: SecurityException) {
             if (tryGrantPermission) {
@@ -180,13 +182,17 @@ object PackageHelper {
                 PackageInfoWithUser(it, 0)
             }
         }
+
         val users = shellGetUsers()
+
         if (users.isEmpty()) {
             return pm.getInstalledPackages(0).map {
                 PackageInfoWithUser(it, 0)
             }
         }
+
         val packages = mutableListOf<PackageInfoWithUser>()
+
         for (user in users) {
             val userPackages = getInstalledPackagesFromUser(user.id)
             for (packageInfo in userPackages) {
@@ -194,6 +200,7 @@ object PackageHelper {
                 packages += PackageInfoWithUser(packageInfo, user.id)
             }
         }
+
         return packages.toList()
     }
 }
