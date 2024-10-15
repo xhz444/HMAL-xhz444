@@ -69,7 +69,7 @@ object PackageHelper {
     private lateinit var pm: PackageManager
 
     private val packageCache = MutableSharedFlow<Map<String, PackageCache>>(replay = 1)
-    private val mAppList = MutableSharedFlow<List<String>>(replay = 1)
+    private val mAppList = MutableSharedFlow<MutableList<String>>(replay = 1)
     val appList: SharedFlow<List<String>> = mAppList
 
     private val mRefreshing = MutableSharedFlow<Boolean>(replay = 1)
@@ -97,7 +97,7 @@ object PackageHelper {
                 }
             }
             packageCache.emit(cache)
-            mAppList.emit(cache.keys.toList())
+            mAppList.emit(cache.keys.toMutableList())
             mRefreshing.emit(false)
         }
     }
@@ -110,7 +110,8 @@ object PackageHelper {
             PrefManager.SortMethod.BY_UPDATE_TIME -> Comparators.byUpdateTime
         }
         if (PrefManager.appFilter_reverseOrder) comparator = comparator.reversed()
-        val list = mAppList.first().sortedWith(firstComparator.then(comparator))
+        val list = mAppList.first()
+        list.sortWith(firstComparator.then(comparator))
         mAppList.emit(list)
     }
 
@@ -127,8 +128,9 @@ object PackageHelper {
     }
 
     fun isSystem(packageName: String): Boolean = runBlocking {
-        packageCache.first()[packageName]?.info?.applicationInfo?.flags?.and(ApplicationInfo.FLAG_SYSTEM) != 0
+        packageCache.first()[packageName]!!.info.applicationInfo.flags and ApplicationInfo.FLAG_SYSTEM != 0
     }
+
     fun shellGetUsers(): List<UserInfo> {
         val users = mutableListOf<UserInfo>()
         val result = Shell.cmd("pm list users").exec()
