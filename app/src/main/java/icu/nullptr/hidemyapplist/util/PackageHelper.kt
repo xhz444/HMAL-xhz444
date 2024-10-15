@@ -92,7 +92,6 @@ object PackageHelper {
                             val label = pm.getApplicationLabel(packageInfo.info.applicationInfo).toString()
                             val icon = hmaApp.appIconLoader.loadIcon(packageInfo.info.applicationInfo)
                             it[packageInfo.info.packageName] = PackageCache(packageInfo.info, label, icon, packageInfo.user)
-                        }
                     }
                 }
             }
