@@ -18,6 +18,9 @@ if (officialBuild) {
 
 android {
     namespace = "com.google.android.hmal"
+    defaultConfig {
+        applicationId = appPackageName
+    }
 
     buildFeatures {
         buildConfig = true
